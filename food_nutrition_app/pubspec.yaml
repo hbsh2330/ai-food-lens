@@ -1,4 +1,4 @@
-﻿name: food_nutrition_app
+name: food_nutrition_app
 description: AI food recognition and nutrition information app.
 publish_to: none
 version: 1.0.0+1
@@ -14,6 +14,10 @@ dependencies:
   http: ^1.2.2
   image_picker: ^1.1.2
   table_calendar: ^3.2.0
+  google_sign_in: ^6.2.2
+  flutter_secure_storage: ^9.2.4
+  kakao_flutter_sdk_common: ^2.0.0+1
+  kakao_flutter_sdk_user: ^2.0.0+1
 
 dev_dependencies:
   flutter_test:

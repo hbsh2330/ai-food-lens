@@ -1,25 +1,44 @@
-﻿part of '../main.dart';
+part of '../main.dart';
 
 // PostgreSQL????ν븯???ъ슜???좎껜 ?뺣낫 紐⑤뜽?낅땲??
 class UserProfile {
-  const UserProfile({this.heightCm, this.weightKg, this.targetWeightKg});
+  const UserProfile({
+    this.heightCm,
+    this.weightKg,
+    this.targetWeightKg,
+    this.age,
+    this.biologicalSex,
+    this.activityLevel,
+    this.goalType,
+  });
   final double? heightCm;
   final double? weightKg;
   final double? targetWeightKg;
+  final int? age;
+  final String? biologicalSex;
+  final String? activityLevel;
+  final String? goalType;
 
-  // 媛앹껜瑜?濡쒖뺄 ??μ냼???ｌ쓣 ???덈뒗 JSON ?뺥깭濡?蹂?섑빀?덈떎.
   Map<String, dynamic> toJson() => {
         'height_cm': heightCm,
         'weight_kg': weightKg,
-        'target_weight_kg': targetWeightKg
+        'target_weight_kg': targetWeightKg,
+        'age': age,
+        'biological_sex': biologicalSex,
+        'activity_level': activityLevel,
+        'goal_type': goalType,
       };
+
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
         heightCm: (json['height_cm'] as num?)?.toDouble(),
         weightKg: (json['weight_kg'] as num?)?.toDouble(),
         targetWeightKg: (json['target_weight_kg'] as num?)?.toDouble(),
+        age: (json['age'] as num?)?.toInt(),
+        biologicalSex: json['biological_sex'] as String?,
+        activityLevel: json['activity_level'] as String?,
+        goalType: json['goal_type'] as String?,
       );
 }
-
 class WeightRecord {
   const WeightRecord({required this.date, required this.weightKg});
   final DateTime date;
@@ -74,12 +93,19 @@ class FoodDetection {
       required this.foodName,
       required this.confidence,
       required this.servingGrams,
-      required this.nutrition});
+      required this.nutrition,
+      this.imageUrl, this.servingUnit = 'grams', this.servingCount, this.foodId, this.aiCandidates = const []});
   final String foodCode;
   final String? foodName;
   final double confidence;
   final double? servingGrams;
   final Nutrition nutrition;
+  final String? imageUrl;
+  // 음식 검색 DB의 ID입니다. 식사 추가 시 누적 등록 횟수를 집계하는 데 사용합니다.
+  final String? foodId;
+  final String servingUnit;
+  final double? servingCount;
+  final List<Map<String, dynamic>> aiCandidates;
 
   // ?곸뼇 ?뺣낫 ?꾨씫 ??0?쇰줈 怨꾩궛?섏뿬 ?⑷퀎 ?붾㈃??以묐떒?섏? ?딅룄濡??⑸땲??
   double get energyKcal => nutrition.energyKcal ?? 0;
@@ -89,21 +115,52 @@ class FoodDetection {
   double get sodiumMg => nutrition.sodiumMg ?? 0;
 
   // ?뚯떇紐?寃?됀룹쭅???깅줉 ?붾㈃?먯꽌 留뚮뱺 濡쒖뺄 ?뚯떇 湲곕줉?낅땲?? AI ?먯? 寃곌낵? ?숈씪???뺤떇?쇰줈 ??ν빀?덈떎.
+  /// AI 결과의 영양 정보는 유지하면서 섭취 단위만 앱 UI에 맞게 바꿉니다.
+  FoodDetection copyWith({
+    String? foodId,
+    String? servingUnit,
+    double? servingCount,
+    List<Map<String, dynamic>>? aiCandidates,
+  }) =>
+      FoodDetection(
+        foodCode: foodCode,
+        foodName: foodName,
+        confidence: confidence,
+        servingGrams: servingGrams,
+        nutrition: nutrition,
+        imageUrl: imageUrl,
+        foodId: foodId ?? this.foodId,
+        servingUnit: servingUnit ?? this.servingUnit,
+        servingCount: servingCount ?? this.servingCount,
+        aiCandidates: aiCandidates ?? this.aiCandidates,
+      );
+
   factory FoodDetection.manual({
     required String foodName,
     required double servingGrams,
     required double calories,
+    required double carbohydrate,
     required double protein,
     required double fat,
     required double sodium,
+    String? imageUrl,
+    String? foodId,
+    String servingUnit = 'grams',
+    double? servingCount,
+    List<Map<String, dynamic>>? aiCandidates,
   }) =>
       FoodDetection(
         foodCode: 'manual_${DateTime.now().microsecondsSinceEpoch}',
         foodName: foodName,
         confidence: 1,
         servingGrams: servingGrams,
+        imageUrl: imageUrl,
+        foodId: foodId,
+        servingUnit: servingUnit,
+        servingCount: servingCount,
         nutrition: Nutrition(
           energyKcal: calories,
+          carbohydrateG: carbohydrate,
           proteinG: protein,
           fatG: fat,
           sodiumMg: sodium,
@@ -114,6 +171,9 @@ class FoodDetection {
         foodName: json['food_name'] as String?,
         confidence: (json['confidence'] as num).toDouble(),
         servingGrams: (json['serving_grams'] as num?)?.toDouble(),
+        imageUrl: json['image_url'] as String?,
+        servingUnit: json['serving_unit'] as String? ?? 'grams',
+        servingCount: (json['serving_count'] as num?)?.toDouble(),
         nutrition: Nutrition.fromJson(
             json['nutrition_per_serving'] as Map<String, dynamic>?),
       );
@@ -125,6 +185,9 @@ class FoodDetection {
         'confidence': confidence,
         'serving_grams': servingGrams,
         'nutrition_per_serving': nutrition.toJson(),
+        'image_url': imageUrl,
+        'serving_unit': servingUnit,
+        'serving_count': servingCount,
       };
 }
 
@@ -167,15 +230,18 @@ class NutritionTargets {
     required this.carbs,
     required this.protein,
     required this.fat,
+    this.keepCustomNutritionTargets = false,
   });
   const NutritionTargets.defaults()
       : calories = 2200,
         carbs = 330,
         protein = 65,
-        fat = 70;
+        fat = 70,
+        keepCustomNutritionTargets = false;
 
   final double calories;
   final double carbs;
   final double protein;
   final double fat;
+  final bool keepCustomNutritionTargets;
 }

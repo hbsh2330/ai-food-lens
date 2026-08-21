@@ -1,4 +1,4 @@
-package com.example.food_nutrition_app
+package com.hbsh.aifoodlens
 
 import io.flutter.embedding.android.FlutterActivity
 

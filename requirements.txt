@@ -1,4 +1,4 @@
-﻿# pip install -r requirements.txt
+# pip install -r requirements.txt
 
 # base ----------------------------------------
 Cython
@@ -20,6 +20,9 @@ python-multipart
 psycopg[binary]>=3.2
 python-dotenv>=1.0
 openpyxl>=3.1
+google-auth>=2.0
+requests>=2.0
+PyJWT>=2.8
 
 # coco ----------------------------------------
 # pycocotools>=2.0

@@ -1,7 +1,10 @@
 part of 'main.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, required this.onSignOut});
+
+  /// 내 정보 화면에서 로그아웃을 확정했을 때 AuthGate까지 전달합니다.
+  final Future<void> Function() onSignOut;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -10,11 +13,15 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
   int _reportReloadToken = 0;
+  int _homeReloadToken = 0;
 
   // 하단 탭을 전환합니다. 리포트 탭을 열 때는 새 key를 주어 저장된 최신 기록을 다시 읽습니다.
   void _changeTab(int index) {
     setState(() {
       _selectedIndex = index;
+      if (index == 0) {
+        _homeReloadToken++;
+      }
       if (index == 2) {
         _reportReloadToken++;
       }
@@ -25,8 +32,8 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     // IndexedStack은 탭을 바꿔도 각 화면의 스크롤·입력 상태를 유지합니다.
     final pages = [
-      const DailyNutritionPage(),
-      const ProfilePage(),
+      DailyNutritionPage(key: ValueKey(_homeReloadToken)),
+      ProfilePage(onSignOut: widget.onSignOut),
       ReportPage(key: ValueKey(_reportReloadToken)),
     ];
     return Scaffold(

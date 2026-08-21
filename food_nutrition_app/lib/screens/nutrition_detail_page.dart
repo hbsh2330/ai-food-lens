@@ -228,60 +228,92 @@ class _RangeSelector extends StatelessWidget {
 }
 
 class _MacroBubbles extends StatelessWidget {
-  const _MacroBubbles(
-      {required this.carbs,
-      required this.protein,
-      required this.fat,
-      required this.total});
+  const _MacroBubbles({
+    required this.carbs,
+    required this.protein,
+    required this.fat,
+    required this.total,
+    this.showGramValues = false,
+  });
   final double carbs;
   final double protein;
   final double fat;
   final double total;
+  // 중량 선택 화면에서는 퍼센트 대신 실제 섭취 g를 표시합니다.
+  final bool showGramValues;
+
+  // 비율이 큰 영양소일수록 원형을 크게 표시합니다.
+  double _bubbleSize(double ratio) => 70 + ratio.clamp(0.0, 1.0) * 70;
 
   @override
   Widget build(BuildContext context) {
-    final safeTotal = total == 0 ? 1.0 : total;
+    final safeTotal = total <= 0 ? 1.0 : total;
+    final carbRatio = carbs / safeTotal;
+    final proteinRatio = protein / safeTotal;
+    final fatRatio = fat / safeTotal;
     return SizedBox(
-      height: 175,
+      height: 178,
       child: Stack(alignment: Alignment.center, children: [
         Positioned(
-            left: 14,
-            top: 4,
-            child: _Bubble(
-                value: carbs / safeTotal,
-                color: Colors.white,
-                textColor: const Color(0xFF28476F),
-                size: 112)),
+          left: 28,
+          top: 8,
+          child: _Bubble(
+            label: '탄수화물',
+            grams: carbs,
+            value: carbRatio,
+            color: Colors.white,
+            textColor: const Color(0xFF28476F),
+            size: _bubbleSize(carbRatio),
+            showGramValues: showGramValues,
+          ),
+        ),
         Positioned(
-            right: 14,
-            top: 4,
-            child: _Bubble(
-                value: fat / safeTotal,
-                color: const Color(0xFF28476F),
-                textColor: Colors.white,
-                size: 112)),
+          right: 28,
+          top: 8,
+          child: _Bubble(
+            label: '지방',
+            grams: fat,
+            value: fatRatio,
+            color: const Color(0xFF28476F),
+            textColor: Colors.white,
+            size: _bubbleSize(fatRatio),
+            showGramValues: showGramValues,
+          ),
+        ),
         Positioned(
-            bottom: 0,
-            child: _Bubble(
-                value: protein / safeTotal,
-                color: const Color(0xFFFFFF91),
-                textColor: const Color(0xFF28476F),
-                size: 88)),
+          bottom: 0,
+          child: _Bubble(
+            label: '단백질',
+            grams: protein,
+            value: proteinRatio,
+            color: const Color(0xFFFFFF91),
+            textColor: const Color(0xFF28476F),
+            size: _bubbleSize(proteinRatio),
+            showGramValues: showGramValues,
+          ),
+        ),
       ]),
     );
   }
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble(
-      {required this.value,
-      required this.color,
-      required this.textColor,
-      required this.size});
+  const _Bubble({
+    required this.label,
+    required this.grams,
+    required this.value,
+    required this.color,
+    required this.textColor,
+    required this.size,
+    required this.showGramValues,
+  });
+  final String label;
+  final double grams;
   final double value;
   final Color color;
   final Color textColor;
   final double size;
+  final bool showGramValues;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -289,14 +321,39 @@ class _Bubble extends StatelessWidget {
         height: size,
         alignment: Alignment.center,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        child: Text('${(value * 100).toStringAsFixed(0)}%',
-            style: TextStyle(
-                color: textColor,
-                fontSize: size * 0.27,
-                fontWeight: FontWeight.w900)),
+        child: showGramValues
+            ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text(label,
+                    style: TextStyle(
+                        color: textColor,
+                        fontSize: size * 0.13,
+                        fontWeight: FontWeight.w800)),
+                const SizedBox(height: 2),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 7),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 7),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('${grams.toStringAsFixed(1)}g',
+                        style: TextStyle(
+                            color: textColor,
+                            fontSize: size * 0.18,
+                            fontWeight: FontWeight.w900)),
+                  ),
+                )
+                  ),
+                )
+              ])
+            : Text('${(value * 100).toStringAsFixed(0)}%',
+                style: TextStyle(
+                    color: textColor,
+                    fontSize: size * 0.27,
+                    fontWeight: FontWeight.w900)),
       );
 }
-
 class _WhiteDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>

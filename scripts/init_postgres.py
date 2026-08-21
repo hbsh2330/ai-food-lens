@@ -1,4 +1,4 @@
-﻿"""Create Food Lens tables and import the verified Excel food catalog into PostgreSQL."""
+"""Create Food Lens tables and import the verified Excel food catalog into PostgreSQL."""
 from __future__ import annotations
 
 import os
@@ -33,12 +33,12 @@ with psycopg.connect(DATABASE_URL) as connection:
             if not name:
                 continue
             cursor.execute(
-                '''INSERT INTO foods (source, name, serving_grams, calories_kcal, protein_g, fat_g, sodium_mg)
-                   VALUES ('catalog', %s, %s, %s, %s, %s, %s)
+                '''INSERT INTO foods (source, name, serving_grams, calories_kcal, carbohydrate_g, protein_g, fat_g, sodium_mg)
+                   VALUES ('catalog', %s, %s, %s, %s, %s, %s, %s)
                    ON CONFLICT (name, serving_grams) WHERE source = 'catalog' DO UPDATE
-                   SET calories_kcal = EXCLUDED.calories_kcal, protein_g = EXCLUDED.protein_g,
+                   SET calories_kcal = EXCLUDED.calories_kcal, carbohydrate_g = EXCLUDED.carbohydrate_g, protein_g = EXCLUDED.protein_g,
                        fat_g = EXCLUDED.fat_g, sodium_mg = EXCLUDED.sodium_mg''',
-                (name, number(row[1]), number(row[2]), number(row[6]), number(row[5]), number(row[9])),
+                (name, number(row[1]), number(row[2]), number(row[3]), number(row[6]), number(row[5]), number(row[9])),
             )
             count += 1
     connection.commit()

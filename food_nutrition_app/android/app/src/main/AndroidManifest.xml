@@ -27,6 +27,17 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Kakao Login callback URI: kakao{NativeAppKey}://oauth -->
+        <activity
+            android:name="com.kakao.sdk.flutter.auth.AuthCodeHandlerActivity"
+            android:exported="true">
+            <intent-filter android:label="kakao_login">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" android:host="oauth" />
+            </intent-filter>
+        </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

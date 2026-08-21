@@ -1,0 +1,2 @@
+# Copy this value into android/local.properties. Do not commit local.properties.
+KAKAO_NATIVE_APP_KEY=YOUR_KAKAO_NATIVE_APP_KEY
