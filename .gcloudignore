@@ -1,0 +1,21 @@
+#!include:.gitignore
+
+# The runtime model comes from private Cloud Storage at container startup.
+weights/
+*.pt
+
+# Never upload local secrets or runtime user files to Cloud Build.
+.env
+.env.*
+uploads/
+
+# Flutter is built and distributed separately from the FastAPI container.
+food_nutrition_app/
+
+# FastAPI starts by loading these repository data files. They must override
+# legacy YOLO ignore patterns such as *.json and data/*.
+!cfg/
+!cfg/yolov3-spp-403cls.cfg
+!data/
+!data/403food.names
+!data/food_catalog.json
