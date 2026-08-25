@@ -12,10 +12,12 @@ from pathlib import Path
 
 import torch
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from api.data_routes import router as data_router
 from api.auth import require_user_id, router as auth_router
 from api.database import connect
+from api.storage import delete_upload, read_upload, save_upload, uses_cloud_storage
 from PIL import Image, UnidentifiedImageError
 
 from models import Darknet
@@ -134,7 +136,6 @@ def health() -> dict:
     return {"status": "ok", "model_loaded": detector is not None}
 
 
-AI_FEEDBACK_DIR = UPLOADS_DIR / "ai-feedback"
 MODEL_VERSION = "yolov3-spp-403cls-best_403food_e200b150v2"
 
 
@@ -150,11 +151,9 @@ def _save_unrecognized_feedback(
 ) -> str | None:
     """Persist one failed recognition image and its diagnostic candidates for later labeling."""
     safe_suffix = suffix.lower() if suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"} else ".jpg"
-    AI_FEEDBACK_DIR.mkdir(parents=True, exist_ok=True)
     file_name = f"{user_id}_{uuid4().hex}{safe_suffix}"
-    target = AI_FEEDBACK_DIR / file_name
-    target.write_bytes(image_bytes)
-    image_url = f"/uploads/ai-feedback/{file_name}"
+    object_name = f"ai-feedback/{file_name}"
+    image_url = save_upload(object_name, image_bytes)
     first = detections[0] if detections else {}
     try:
         with connect() as connection:
@@ -183,7 +182,7 @@ def _save_unrecognized_feedback(
         return feedback_id
     except Exception:
         # Failure logging must never hide the normal 'not recognized' result from the app.
-        target.unlink(missing_ok=True)
+        delete_upload(object_name)
         logger.exception("Could not save failed AI recognition feedback")
         return None
 

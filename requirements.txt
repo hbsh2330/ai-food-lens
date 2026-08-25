@@ -21,6 +21,7 @@ psycopg[binary]>=3.2
 python-dotenv>=1.0
 openpyxl>=3.1
 google-auth>=2.0
+google-cloud-storage>=2.18
 requests>=2.0
 PyJWT>=2.8
 

@@ -1,0 +1,54 @@
+name: food-lens
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: foodlens
+      POSTGRES_USER: foodlens
+      POSTGRES_PASSWORD: foodlens_local_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foodlens -d foodlens"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  db-init:
+    image: food-lens-api:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://foodlens:foodlens_local_password@db:5432/foodlens
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["python", "scripts/init_postgres.py"]
+    restart: "no"
+
+  api:
+    image: food-lens-api:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgresql://foodlens:foodlens_local_password@db:5432/foodlens
+    ports:
+      - "8000:8080"
+    volumes:
+      - uploads_data:/app/uploads
+      - ./weights:/app/weights:ro
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
+  uploads_data:

@@ -15,12 +15,9 @@ from io import BytesIO
 
 from .auth import require_user_id
 from .database import connect
+from .storage import delete_upload, save_upload
 
 router = APIRouter(prefix="/data", tags=["app-data"])
-
-ROOT = Path(__file__).resolve().parents[1]
-FOOD_IMAGE_DIR = ROOT / 'uploads' / 'food-images'
-AI_FEEDBACK_DIR = ROOT / 'uploads' / 'ai-feedback'
 
 
 class ProfileIn(BaseModel):
@@ -406,10 +403,11 @@ async def upload_food_image(file: UploadFile = File(...), user_id: str = Depends
     suffix = Path(file.filename or "food.jpg").suffix.lower()
     if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
         suffix = ".jpg"
-    FOOD_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
     file_name = f"{user_id}_{uuid4().hex}{suffix}"
-    (FOOD_IMAGE_DIR / file_name).write_bytes(image_bytes)
-    return {"image_url": f"/uploads/food-images/{file_name}"}
+    image_url = save_upload(
+        f"food-images/{file_name}", image_bytes, file.content_type
+    )
+    return {"image_url": image_url}
 
 @router.post("/ai-feedback")
 async def create_incorrect_ai_feedback(
@@ -446,11 +444,9 @@ async def create_incorrect_ai_feedback(
     suffix = Path(file.filename or "feedback.jpg").suffix.lower()
     if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
         suffix = ".jpg"
-    AI_FEEDBACK_DIR.mkdir(parents=True, exist_ok=True)
     file_name = f"{user_id}_{uuid4().hex}{suffix}"
-    target = AI_FEEDBACK_DIR / file_name
-    target.write_bytes(image_bytes)
-    image_url = f"/uploads/ai-feedback/{file_name}"
+    object_name = f"ai-feedback/{file_name}"
+    image_url = save_upload(object_name, image_bytes, file.content_type)
     try:
         with connect() as connection:
             with connection.cursor() as cursor:
@@ -468,7 +464,7 @@ async def create_incorrect_ai_feedback(
                 feedback_id = str(cursor.fetchone()["id"])
             connection.commit()
     except Exception:
-        target.unlink(missing_ok=True)
+        delete_upload(object_name)
         raise
     return {"id": feedback_id, "image_url": image_url}
 

@@ -26,6 +26,7 @@ part 'screens/login_page.dart';
 part 'screens/profile_setup_page.dart';
 part 'screens/my_foods_page.dart';
 part 'screens/legal_document_page.dart';
+part 'screens/splash_page.dart';
 
 // 앱의 시작점: 최상위 위젯을 실행합니다.
 Future<void> main() async {
@@ -58,7 +59,7 @@ class FoodNutritionApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.background,
         fontFamily: 'sans',
       ),
-      home: const AuthGate(),
+      home: const SplashPage(),
     );
   }
 }
